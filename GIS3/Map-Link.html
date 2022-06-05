@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>My Map - wzy</title>
+
+		<link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css">
+		<script src="https://js.arcgis.com/4.23/"></script>
+		<link rel="stylesheet" href="MapMenu.css">
+
+		<style>
+			html,
+			body {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+				font-weight: bolder;
+				border: 10px;
+				border-radius: 10%;
+				/* 添加圆角边框 */
+				border-color: black;
+			}
+
+			#viewDiv1 {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 50%;
+			}
+
+			#viewDiv2 {
+				position: absolute;
+				top: 0px;
+				right: 0px;
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 50%;
+			}
+
+			#ShowInfo {
+				float: left;
+				position: absolute;
+				bottom: 2%;
+				left: 1%;
+				padding: 10px 20px;
+				border-style: dotted;
+				border-radius: 22%;
+				background-color: #d8d4d4eb;
+				opacity: 0.8;
+				font-family: "Comic Sans MS";
+				font-size: 14px;
+			}
+		</style>
+
+		<script>
+			require(["esri/config",
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/FeatureLayer",
+			], function(esriConfig, Map, MapView, FLayer) {
+
+				esriConfig.apiKey =
+					"AAPK424de85d28c844e4b1ee55c39e7cebc9x1v2-aG5JY-DK1o4R1Yin9PN5bSqv292_i3klsReMajPhWHru2FP5SzvCuD1yJS3";
+
+				// 左侧底图
+				const map1 = new Map({
+					basemap: "arcgis-community" // Basemap layer service
+				});
+
+				// 左侧视图
+				const view1 = new MapView({
+					container: "viewDiv1", // Div element
+					map: map1,
+					center: [105.767614, 35.64586], // Longitude, latitude
+					zoom: 3, // Zoom level 							
+				});
+
+				view1.ui.remove("attribution");
+				view1.ui.remove("zoom");
+
+
+				// 显示经纬度坐标、比例尺大小和缩放级别
+				function showInformation(pt) {
+					document.getElementById("coordinateDisplay").textContent = "Lat/Lon  " + pt.latitude.toFixed(3) +
+						", " +
+						pt.longitude.toFixed(3);
+					document.getElementById("scaleDisplay").textContent = "  | Scale  1:" + Math.round(view1.scale * 1) /
+						1;
+					document.getElementById("zoomDisplay").textContent = "  | Zoom  " + view1.zoom;
+				}
+
+				// 视图静止时，事件显示中心的位置坐标
+				view1.watch(["stationary"], function() {
+					showInformation(view1.center);
+				});
+
+				// 显示鼠标移动时的位置坐标
+				view1.on(["pointer-down", "pointer-move"], function(event) {
+					showInformation(view1.toMap({
+						x: event.x,
+						y: event.y
+					}));
+				});
+
+
+				// 右侧底图
+				const map2 = new Map({
+					basemap: "arcgis-midcentury" // Basemap layer service
+				});
+
+				// 右侧视图
+				const view2 = new MapView({
+					container: "viewDiv2", // Div element
+					map: map2,
+					center: [105.767614, 35.64586], // Longitude, latitude
+					zoom: 3, // Zoom level 							
+				});
+
+				view2.ui.remove("attribution");
+				view2.ui.remove("zoom");
+
+				// 两侧窗口联动
+				view1.on(["pointer-down", "pointer-move"], function(evt) {
+					// LinkMap2();
+					view2.zoom = view1.zoom;
+					view2.scale = view2.scale;
+					view2.center = view1.center;
+				});
+
+				view2.on(["pointer-down", "pointer-move"], function(evt) {
+					view1.zoom = view2.zoom;
+					view1.scale = view2.scale;
+					view1.center = view2.center;
+				});
+
+				// 两侧窗口联动
+				view1.on(["mouse-wheel", "drag", "hold"], function(event) {
+					setTimeout(function() {
+						// viewpoint包含但不限于extent
+						view2.viewpoint = view1.viewpoint;
+					}, 70);
+				});
+
+				view2.on(["mouse-wheel", "drag", "hold"], function(event) {
+					setTimeout(function() {
+						// viewpoint包含但不限于extent
+						view1.viewpoint = view2.viewpoint;
+					}, 70);
+				});
+
+			});
+		</script>
+
+	</head>
+
+
+	<body>
+
+		<ul>
+			<li><a class="entypo-home" href="Map-Change.html"></a> <span>ChangeBaseMap</span></li>
+
+			<li><a class="entypo-newspaper" href="Map-Layers.html"></a> <span>AddLayers</span></li>
+
+			<li><a class="entypo-link" href="Map-Link.html"></a> <span>LinkMap</span></li>
+
+			<li><a class="entypo-menu" href="Map-Swipe.html"></a> <span>LayerSwipe</span></li>
+
+			<li><a class="entypo-star" href="Map-highlight.html"></a> <span>Highlight</span></li>
+
+			<li><a class="entypo-lifebuoy" href="Map-buffer.html"></a> <span>BufferQuery</span></li>
+
+			<li><a class="entypo-users" href="Map-population.html"></a> <span>Population</span></li>
+		</ul>
+
+		<div id="viewDiv1"></div>
+		<div id="viewDiv2"></div>
+
+		<div id="ShowInfo">
+			<div id="coordinateDisplay" style="display:inline"></div>
+			<div id="scaleDisplay" style="display:inline"></div>
+			<div id="zoomDisplay" style="display:inline"></div>
+		</div>
+
+	</body>
+
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>My map - wzy</title>
+
+		<style>
+			html,
+			body,
+			#viewDiv {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+			}
+		</style>
+
+		<link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css" />
+		<script src="https://js.arcgis.com/4.23/"></script>
+		<link rel="stylesheet" href="css/MapMenu.css">
+
+		<script>
+			require([
+				"esri/Map",
+				"esri/layers/GeoJSONLayer",
+				"esri/views/MapView",
+				"esri/renderers/ClassBreaksRenderer",
+				"esri/renderers/visualVariables/ColorVariable",
+				"esri/widgets/Legend",
+			], function(Map, GeoJSONLayer, MapView, ClassBreaksRenderer, ColorVariable, Legend) {
+				// If GeoJSON files are not on the same domain as your website, a CORS enabled server
+				// or a proxy is required.
+				const url =
+					"https://liguiye.github.io/WebGIS3/chinawgs84_simplify.json";
+				const defaultSym = {
+					type: "simple-fill", // autocasts as new SimpleFillSymbol()
+					outline: {
+						color: [128, 128, 128, 0.2],
+						width: "0.1px"
+					}
+				};
+				const renderer = {
+					type: "simple", // autocasts as new SimpleRenderer()
+					symbol: defaultSym,
+					visualVariables: [{
+						type: "color",
+						field: "pop2010",
+						stops: [{
+								value: 0,
+								color: "#F6CECE",
+
+							},
+							{
+								value: 100000000,
+								color: "#FF0000",
+
+							}
+						]
+					}]
+				};
+
+				const geojsonLayer = new GeoJSONLayer({
+					url: url,
+					title: "全国人口数量分布图",
+					popupTemplate: {
+						// autocasts as new PopupTemplate()
+						title: "{ENGLISH}",
+						content: "Number:{pop2010}",
+
+					},
+					renderer: renderer
+				});
+
+				const map = new Map({
+					basemap: "gray",
+					layers: [geojsonLayer]
+				});
+
+				const view = new MapView({
+					container: "viewDiv", // Div element
+					map: map,
+					center: [105.767614, 35.84586], // Longitude, latitude
+					zoom: 4, // Zoom level 	
+				});
+
+				view.ui.remove("attribution");
+				view.ui.remove("zoom");
+
+				view.ui.add(
+					new Legend({
+						view: view
+					}),
+					"bottom-right"
+				);
+
+			});
+		</script>
+	</head>
+
+	<body>
+		<div id="viewDiv"></div>
+
+		<ul>
+			<li><a class="entypo-home" href="Map-Change.html"></a> <span>ChangeBaseMap</span></li>
+
+			<li><a class="entypo-newspaper" href="Map-Layers.html"></a> <span>AddLayers</span></li>
+
+			<li><a class="entypo-link" href="Map-Link.html"></a> <span>LinkMap</span></li>
+
+			<li><a class="entypo-menu" href="Map-Swipe.html"></a> <span>LayerSwipe</span></li>
+
+			<li><a class="entypo-star" href="Map-highlight.html"></a> <span>Highlight</span></li>
+
+			<li><a class="entypo-lifebuoy" href="Map-buffer.html"></a> <span>BufferQuery</span></li>
+
+			<li><a class="entypo-users" href="Map-population.html"></a> <span>Population</span></li>
+		</ul>
+
+	</body>
+</html>

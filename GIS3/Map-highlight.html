@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>My Map - wzy</title>
+
+		<link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css">
+		<script src="https://js.arcgis.com/4.23/"></script>
+		<link rel="stylesheet" href="MapMenu.css">
+
+		<style>
+			html,
+			body,
+			#viewDiv {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+			}
+		</style>
+
+		<script>
+			require([
+				"esri/config",
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/FeatureLayer",
+				"esri/Graphic",
+				"esri/layers/GeoJSONLayer",
+				"esri/geometry/geometryEngine"
+			], function(esriConfig, Map, MapView, FL, Graphic, GeoJSONLayer, geometryEngine) {
+
+				esriConfig.apiKey =
+					"AAPK424de85d28c844e4b1ee55c39e7cebc9x1v2-aG5JY-DK1o4R1Yin9PN5bSqv292_i3klsReMajPhWHru2FP5SzvCuD1yJS3";
+
+				const map = new Map({
+					basemap: "arcgis-colored-pencil" // Basemap layer service
+				});
+
+				const EarthquakesLayer = new FL({
+					url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Earthquakes_Since1970/FeatureServer/0",
+					popupTemplate: {
+						title: "{magnitude}"
+					}
+				});
+				map.add(EarthquakesLayer);
+
+				const geojsonlayer = new GeoJSONLayer({
+					url: "https://cxqttkl.github.io/web4gis15/China_No_Area.json",
+					copyright: "China Province"
+				});
+				geojsonlayer.outFields = ["*"];
+				map.add(geojsonlayer);
+
+				const view = new MapView({
+					container: "viewDiv", // Div element
+					map: map,
+					center: [105.767614, 35.64586], // Longitude, latitude
+					zoom: 3, // Zoom level 	
+				});
+
+				view.ui.remove("attribution");
+				view.ui.remove("zoom");
+
+				view.on("click", function(evt) {
+					view.graphics.removeAll();
+					if (evt.button != 0) return;
+					let query = geojsonlayer.createQuery();
+					query.geometry = view.toMap(evt); // the point location of the pointer
+					query.distance = 2;
+					query.units = "miles";
+					query.spatialRelationship = "intersects"; // this is the default
+					query.returnGeometry = true;
+					query.outFields = ["*"];
+					//query.where = "mag > 3";
+
+					//geojsonlayer.queryFeatureCount(query).then(function (abc) { alert("Layer: "+abc) });
+					geojsonlayer.queryFeatures(query).then(function(abc) {
+
+						abc.features.forEach(function(item) {
+
+							var g = new Graphic({
+								geometry: item.geometry,
+								attributes: item.attributes,
+								symbol: {
+									//type: "simple-marker",
+									color: [200, 200, 200, 0.3]
+									//size: 3,//item.attributes['magnitude'] * item.attributes['magnitude'],
+									style: "square"
+								}
+							});
+
+							view.graphics.add(g);
+
+							const area = geometryEngine.geodesicArea(item.geometry,
+								"square-kilometers");
+							alert(item.attributes["PROV"] + " Area: " + area);
+
+						});
+
+					});
+				});
+
+			});
+		</script>
+
+	</head>
+
+	<body>
+		<div id="viewDiv"></div>
+
+		<ul>
+			<li><a class="entypo-home" href="Map-Change.html"></a> <span>ChangeBaseMap</span></li>
+
+			<li><a class="entypo-newspaper" href="Map-Layers.html"></a> <span>AddLayers</span></li>
+
+			<li><a class="entypo-link" href="Map-Link.html"></a> <span>LinkMap</span></li>
+
+			<li><a class="entypo-menu" href="Map-Swipe.html"></a> <span>LayerSwipe</span></li>
+
+			<li><a class="entypo-star" href="Map-highlight.html"></a> <span>Highlight</span></li>
+
+			<li><a class="entypo-lifebuoy" href="Map-buffer.html"></a> <span>BufferQuery</span></li>
+
+			<li><a class="entypo-users" href="Map-population.html"></a> <span>Population</span></li>
+		</ul>
+
+	</body>
+
+</html>

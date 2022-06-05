@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>My Map - wzy</title>
+
+		<link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css">
+		<script src="https://js.arcgis.com/4.23/"></script>
+		<link rel="stylesheet" href="MapMenu.css">
+
+		<style>
+			html,
+			body {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+				font-weight: bolder;
+				border: 10px;
+				border-radius: 10%;
+				/* 添加圆角边框 */
+				border-color: black;
+			}
+
+			#viewDiv1 {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+			}
+
+			#ShowInfo {
+				float: left;
+				position: absolute;
+				bottom: 2%;
+				left: 1%;
+				padding: 10px 20px;
+				border-style: dotted;
+				border-radius: 22%;
+				background-color: #d8d4d4eb;
+				opacity: 0.8;
+				font-family: "Comic Sans MS";
+				font-size: 14px;
+			}
+
+			#LayerBox {
+				position: absolute;
+				top: 2%;
+				right: 1%;
+				width: 195px;
+				height: 199px;
+				background-size: 100%;
+				background-color: #d8d4d4eb;
+				opacity: 0.8;
+				/* z-index: 1; */
+				border: 2px dotted black;
+				border-radius: 5%;
+				text-align: center;
+				font-family: "YouYuan";
+				font-size: 16px;
+				color: black;
+			}
+
+			p {
+				font-size: large;
+			}
+
+			.button_Add {
+				margin-left: 1.5px;
+				float: left;
+				/* background-color: white; */
+				border: 1.4px solid seagreen;
+				color: seagreen;
+				;
+				border-radius: 15px;
+				height: 21px;
+				width: 24px;
+				opacity: 0.8;
+				font-size: 15px;
+				font-family: "Lucida Console";
+				font-weight: bolder;
+			}
+
+			.button_Remove {
+				margin-left: 8px;
+				float: left;
+				/* background-color: white; */
+				border: 1.4px solid firebrick;
+				color: firebrick;
+				border-radius: 15px;
+				height: 21px;
+				width: 24px;
+				opacity: 0.8;
+				font-size: 15px;
+				font-family: "Lucida Console";
+				font-weight: bolder;
+			}
+
+			.button_Delete {
+				background-color: #dfdfdf;
+				border: 1.4px solid #0f69fa;
+				color: #0f69fa;
+				border-radius: 10px;
+				height: 25px;
+				width: 75px;
+				opacity: 0.8;
+				font-size: 14px;
+				font-family: "Comic Sans MS";
+				font-weight: bolder;
+			}
+
+			#LayerBox1 {
+				float: left;
+				margin-left: 11px;
+				z-index: 3;
+				font-family: "Comic Sans MS"
+			}
+
+			#LayerBox2 {
+				float: left;
+				margin-top: 5px;
+				margin-left: 11px;
+				z-index: 2;
+				font-family: "Comic Sans MS"
+			}
+
+			#LayerBox3 {
+				float: left;
+				margin-top: 5px;
+				margin-left: 11px;
+				z-index: 1;
+				font-family: "Comic Sans MS"
+			}
+
+			#DeleteBox {
+				float: left;
+				margin-top: 10px;
+				margin-left: 12px;
+			}
+
+			#layersNum {
+				float: left;
+				margin-top: 8px;
+				margin-left: 20px;
+			}
+		</style>
+
+		<script>
+			require(["esri/config",
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/FeatureLayer",
+			], function(esriConfig, Map, MapView, FLayer) {
+
+				esriConfig.apiKey =
+					"AAPK424de85d28c844e4b1ee55c39e7cebc9x1v2-aG5JY-DK1o4R1Yin9PN5bSqv292_i3klsReMajPhWHru2FP5SzvCuD1yJS3";
+
+				// 左侧底图
+				const map1 = new Map({
+					basemap: "arcgis-community" // Basemap layer service
+				});
+
+				// 左侧视图
+				const view1 = new MapView({
+					container: "viewDiv1", // Div element
+					map: map1,
+					center: [105.767614, 35.64586], // Longitude, latitude
+					zoom: 3, // Zoom level 							
+				});
+
+				view1.ui.remove("attribution");
+				view1.ui.remove("zoom");
+
+
+				// 显示经纬度坐标、比例尺大小和缩放级别
+				function showInformation(pt) {
+					document.getElementById("coordinateDisplay").textContent = "Lat/Lon  " + pt.latitude.toFixed(3) +
+						", " +
+						pt.longitude.toFixed(3);
+					document.getElementById("scaleDisplay").textContent = "  | Scale  1:" + Math.round(view1.scale * 1) /
+						1;
+					document.getElementById("zoomDisplay").textContent = "  | Zoom  " + view1.zoom;
+				}
+
+				// 视图静止时，事件显示中心的位置坐标
+				view1.watch(["stationary"], function() {
+					showInformation(view1.center);
+				});
+
+				// 显示鼠标移动时的位置坐标
+				view1.on(["pointer-down", "pointer-move"], function(event) {
+					showInformation(view1.toMap({
+						x: event.x,
+						y: event.y
+					}));
+				});
+
+				// 定义点、线、面图层
+				var PointLayer = new FLayer({
+					url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/WorldTimeZones/MapServer/0"
+				});
+
+				var LineLayer = new FLayer({
+					url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/WorldTimeZones/MapServer/1"
+				});
+
+				var PolygonLayer = new FLayer({
+					url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/WorldTimeZones/MapServer/2"
+				});
+
+				var pt = 0;
+				var L = 0;
+				var pg = 0;
+
+				// 添加点、线、面图层
+				document.getElementById("AddPoint").addEventListener("click", function() {
+					map1.add(PointLayer);
+					if (pt == 0) {
+						pt += 1;
+					} else {
+						pt = pt;
+					}
+				});
+
+				document.getElementById("AddLine").addEventListener("click", function() {
+					map1.add(LineLayer);
+					if (L == 0) {
+						L += 1;
+					} else {
+						L = L;
+					}
+				});
+
+				document.getElementById("AddPolygon").addEventListener("click", function() {
+					map1.add(PolygonLayer);
+					if (pg == 0) {
+						pg += 1;
+					} else {
+						pg = pg;
+					}
+				});
+
+				//移除点、线、面图层
+				document.getElementById("RemovePoint").addEventListener("click", function() {
+					view1.map.remove(PointLayer);
+					if (pt == 1) {
+						pt -= 1;
+					} else {
+						pt = pt;
+					}
+				});
+
+				document.getElementById("RemoveLine").addEventListener("click", function() {
+					view1.map.remove(LineLayer);
+					if (L == 1) {
+						L -= 1;
+					} else {
+						L = L;
+					}
+				});
+
+				document.getElementById("RemovePolygon").addEventListener("click", function() {
+					view1.map.remove(PolygonLayer);
+					if (pg == 1) {
+						pg -= 1;
+					} else {
+						pg = pg;
+					}
+				});
+
+
+				// 删除图层
+				document.getElementById("Delete").addEventListener("click", function() {
+					if (pt == 1) {
+						view1.map.remove(PointLayer);
+						document.getElementById("LayerBox1").innerHTML = "";
+						pt = 0;
+					} else {
+						pt = pt
+					};
+
+					if (L == 1) {
+						view1.map.remove(LineLayer);
+						document.getElementById("LayerBox2").innerHTML = "";
+						L = 0;
+					} else {
+						L = L
+					};
+
+					if (pg == 1) {
+						view1.map.remove(PolygonLayer);
+						document.getElementById("LayerBox3").innerHTML = "";
+						pg = 0;
+					} else {
+						pg = pg;
+					};
+
+				});
+
+				// 监测图层数量
+				view1.map.allLayers.on("change", function(event) {
+					// var num = event.target.length - 1;
+					var num = pt + L + pg;
+					document.getElementById("layersNum").innerHTML = "图层数量： " + num;
+				});
+
+			});
+		</script>
+
+	</head>
+
+
+	<body>
+		<ul>
+			<li><a class="entypo-home" href="Map-Change.html"></a> <span>ChangeBaseMap</span></li>
+
+			<li><a class="entypo-newspaper" href="Map-Layers.html"></a> <span>AddLayers</span></li>
+
+			<li><a class="entypo-link" href="Map-Link.html"></a> <span>LinkMap</span></li>
+
+			<li><a class="entypo-menu" href="Map-Swipe.html"></a> <span>LayerSwipe</span></li>
+
+			<li><a class="entypo-star" href="Map-highlight.html"></a> <span>Highlight</span></li>
+
+			<li><a class="entypo-lifebuoy" href="Map-buffer.html"></a> <span>BufferQuery</span></li>
+
+			<li><a class="entypo-users" href="Map-population.html"></a> <span>Population</span></li>
+		</ul>
+
+		<div id="viewDiv1"></div>
+
+		<div id="ShowInfo">
+			<div id="coordinateDisplay" style="display:inline"></div>
+			<div id="scaleDisplay" style="display:inline"></div>
+			<div id="zoomDisplay" style="display:inline"></div>
+		</div>
+
+		<div id="LayerBox">
+			<p>添加图层</p>
+
+			<div id="LayerBox1">
+				<a>&nbsp;World Cities</a>
+				<input type="button" class="button_Add" id="AddPoint" value="√">
+				<input type="button" class="button_Remove" id="RemovePoint" value="×">
+			</div>
+
+			<div id="LayerBox2">
+				<a>&nbsp;Time Zones</a>
+				<input type="button" class="button_Add" id="AddLine" value="√">
+				<input type="button" class="button_Remove" id="RemoveLine" value="×">
+			</div>
+
+			<div id="LayerBox3">
+				<a>&nbsp;World Regions</a>
+				<input type="button" class="button_Add" id="AddPolygon" value="√">
+				<input type="button" class="button_Remove" id="RemovePolygon" value="×">
+			</div>
+
+			<div id="DeleteBox">
+				<a>&nbsp;删除图层&nbsp;<a>
+						<input type="button" class="button_Delete" id="Delete" value="Delete">
+			</div>
+
+			<div id="layersNum"></div>
+		</div>
+
+	</body>
+
+</html>
