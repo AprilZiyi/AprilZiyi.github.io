@@ -18,7 +18,7 @@
 
 		<link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css" />
 		<script src="https://js.arcgis.com/4.23/"></script>
-		<link rel="stylesheet" href="css/MapMenu.css">
+		<link rel="stylesheet" href="MapMenu.css">
 
 		<script>
 			require([
@@ -78,10 +78,10 @@
 				});
 
 				const view = new MapView({
-					container: "viewDiv", // Div element
-					map: map,
-					center: [105.767614, 35.84586], // Longitude, latitude
-					zoom: 4, // Zoom level 	
+					container: "viewDiv",
+					center: [105.767614, 35.64586],
+					zoom: 4,
+					map: map
 				});
 
 				view.ui.remove("attribution");
@@ -95,7 +95,9 @@
 				);
 
 			});
+			
 		</script>
+
 	</head>
 
 	<body>
